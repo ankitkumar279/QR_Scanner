@@ -65,12 +65,6 @@ button:hover {
   color: #333;
   margin-top: 10px;
 }
-
-.small {
-  font-size: 14px;
-  color: #777;
-  margin-top: 10px;
-}
 </style>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -83,11 +77,10 @@ button:hover {
 <div id="reader"></div>
 
 <div id="rewardPopup" class="popup">
-  <h1>🎉 Reward Redeemed</h1>
+  <h1>Reward Redeemed</h1>
   <div class="reward-box">
     <p id="rewardName" class="reward-name">Loading...</p>
   </div>
-  <p class="small">Show this screen to staff.</p>
   <button onclick="closePopup()">Close</button>
 </div>
 
@@ -110,7 +103,6 @@ startBtn.addEventListener('click', () => {
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      // Use back camera
       const backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
       const cameraId = backCamera.id;
 
@@ -118,11 +110,8 @@ startBtn.addEventListener('click', () => {
         cameraId,
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
-          // Stop scanning when QR detected
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-
-            // Show fake reward message
             rewardNameEl.textContent = "User XYZ has redeemed a reward!";
 
             rewardPopup.style.display = 'block';
