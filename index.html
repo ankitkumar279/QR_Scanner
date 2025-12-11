@@ -73,7 +73,6 @@ button:hover {
 }
 </style>
 
-<!-- Include QR scanner library -->
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
@@ -98,13 +97,6 @@ const rewardPopup = document.getElementById('rewardPopup');
 const rewardNameEl = document.getElementById('rewardName');
 let html5QrcodeScanner;
 
-const users = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"];
-const rewards = ["Pursuit Band", "Free Coffee", "T-Shirt", "VIP Pass", "Sticker Pack"];
-
-function getRandomItem(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 function closePopup() {
   rewardPopup.style.display = 'none';
   startBtn.style.display = 'inline-block';
@@ -118,6 +110,7 @@ startBtn.addEventListener('click', () => {
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
+      // Use back camera
       const backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
       const cameraId = backCamera.id;
 
@@ -125,13 +118,12 @@ startBtn.addEventListener('click', () => {
         cameraId,
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
+          // Stop scanning when QR detected
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-            
-            // Random fake message
-            const randomUser = getRandomItem(users);
-            const randomReward = getRandomItem(rewards);
-            rewardNameEl.textContent = `${randomUser} has redeemed ${randomReward}!`;
+
+            // Show fake reward message
+            rewardNameEl.textContent = "User XYZ has redeemed a reward!";
 
             rewardPopup.style.display = 'block';
           });
