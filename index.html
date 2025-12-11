@@ -60,7 +60,7 @@ button:hover {
 }
 
 .reward-name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #333;
   margin-top: 10px;
@@ -86,7 +86,6 @@ button:hover {
 <div id="rewardPopup" class="popup">
   <h1>🎉 Reward Redeemed</h1>
   <div class="reward-box">
-    <p>You have redeemed:</p>
     <p id="rewardName" class="reward-name">Loading...</p>
   </div>
   <p class="small">Show this screen to staff.</p>
@@ -123,8 +122,14 @@ startBtn.addEventListener('click', () => {
           // Stop scanner when QR detected
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-            // Show QR content directly as reward
-            rewardNameEl.textContent = qrCodeMessage || "Invalid QR Code!";
+            try {
+              const url = new URL(qrCodeMessage);
+              const user = url.searchParams.get('user') || "Unknown User";
+              const reward = url.searchParams.get('reward') || "Unknown Reward";
+              rewardNameEl.textContent = `User ${user} has redeemed: ${reward}`;
+            } catch(e) {
+              rewardNameEl.textContent = qrCodeMessage || "Invalid QR Code!";
+            }
             rewardPopup.style.display = 'block';
           });
         },
