@@ -48,6 +48,15 @@ button:hover {
   padding: 25px;
   border-radius: 16px;
   box-shadow: 0 0 20px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.reward-box {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fff3e6;
+  border-left: 8px solid #ff7300;
+  border-radius: 12px;
 }
 
 .reward-name {
@@ -83,7 +92,6 @@ button:hover {
     <p id="rewardName" class="reward-name">Loading...</p>
   </div>
   <p class="small">Show this screen to staff.</p>
-  <button onclick="closePopup()">Close</button>
 </div>
 
 <script>
@@ -92,24 +100,33 @@ const rewardPopup = document.getElementById('rewardPopup');
 const rewardNameEl = document.getElementById('rewardName');
 let html5QrcodeScanner;
 
+// Function to hide popup
+function hidePopup() {
+  rewardPopup.style.display = 'none';
+  startBtn.style.display = 'inline-block';
+}
+
 startBtn.addEventListener('click', () => {
-  // Hide button after clicking
+  // Hide button
   startBtn.style.display = 'none';
 
   html5QrcodeScanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      const cameraId = cameras[0].id;
+      // Try to select back camera
+      let backCamera = cameras.find(cam => cam.label.toLowerCase().includes('back')) || cameras[0];
+      const cameraId = backCamera.id;
+
       html5QrcodeScanner.start(
-        cameraId,
+        { deviceId: { exact: cameraId }, facingMode: "environment" }, // use back camera
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
           // Stop scanning
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-            // Get reward from scanned QR URL
             try {
+              // Extract reward from scanned URL
               const url = new URL(qrCodeMessage);
               const reward = url.searchParams.get('reward');
               rewardNameEl.textContent = reward ? decodeURIComponent(reward) : "Invalid QR Code!";
@@ -118,10 +135,11 @@ startBtn.addEventListener('click', () => {
             }
             // Show popup
             rewardPopup.style.display = 'block';
+            // Auto-hide popup after 5 seconds
+            setTimeout(hidePopup, 5000);
           });
         },
         errorMessage => {
-          // optional: handle scan errors
           console.warn("QR scan error:", errorMessage);
         }
       );
@@ -130,11 +148,6 @@ startBtn.addEventListener('click', () => {
     alert("Camera not found or permission denied: " + err);
   });
 });
-
-function closePopup() {
-  rewardPopup.style.display = 'none';
-  startBtn.style.display = 'inline-block';
-}
 </script>
 
 </body>
