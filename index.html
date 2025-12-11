@@ -103,6 +103,7 @@ startBtn.addEventListener('click', () => {
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
+      // Use back camera
       const backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
       const cameraId = backCamera.id;
 
@@ -112,7 +113,21 @@ startBtn.addEventListener('click', () => {
         qrCodeMessage => {
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-            rewardNameEl.textContent = "User XYZ has redeemed a reward!";
+
+            // Only show message if QR is from your big app
+            try {
+              const url = new URL(qrCodeMessage);
+              if (
+                url.hostname === "ankitkumar279.github.io" &&
+                url.pathname === "/QR_Scanner/"
+              ) {
+                rewardNameEl.textContent = "User XYZ has redeemed a reward!";
+              } else {
+                rewardNameEl.textContent = "Invalid QR Code!";
+              }
+            } catch (e) {
+              rewardNameEl.textContent = "Invalid QR Code!";
+            }
 
             rewardPopup.style.display = 'block';
           });
