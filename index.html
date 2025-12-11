@@ -98,6 +98,13 @@ const rewardPopup = document.getElementById('rewardPopup');
 const rewardNameEl = document.getElementById('rewardName');
 let html5QrcodeScanner;
 
+const users = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"];
+const rewards = ["Pursuit Band", "Free Coffee", "T-Shirt", "VIP Pass", "Sticker Pack"];
+
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function closePopup() {
   rewardPopup.style.display = 'none';
   startBtn.style.display = 'inline-block';
@@ -111,7 +118,6 @@ startBtn.addEventListener('click', () => {
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      // Pick back camera by default
       const backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
       const cameraId = backCamera.id;
 
@@ -119,17 +125,14 @@ startBtn.addEventListener('click', () => {
         cameraId,
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
-          // Stop scanner when QR detected
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
-            try {
-              const url = new URL(qrCodeMessage);
-              const user = url.searchParams.get('user') || "Unknown User";
-              const reward = url.searchParams.get('reward') || "Unknown Reward";
-              rewardNameEl.textContent = `User ${user} has redeemed: ${reward}`;
-            } catch(e) {
-              rewardNameEl.textContent = qrCodeMessage || "Invalid QR Code!";
-            }
+            
+            // Random fake message
+            const randomUser = getRandomItem(users);
+            const randomReward = getRandomItem(rewards);
+            rewardNameEl.textContent = `${randomUser} has redeemed ${randomReward}!`;
+
             rewardPopup.style.display = 'block';
           });
         },
