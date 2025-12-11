@@ -104,45 +104,69 @@ let html5QrcodeScanner;
 function hidePopup() {
   rewardPopup.style.display = 'none';
   startBtn.style.display = 'inline-block';
+  document.getElementById('reader').style.display = 'block';
 }
 
 startBtn.addEventListener('click', () => {
-  // Hide button
   startBtn.style.display = 'none';
-
   html5QrcodeScanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      // Try to select back camera
-      let backCamera = cameras.find(cam => cam.label.toLowerCase().includes('back')) || cameras[0];
+      // Explicitly select back camera if available
+      let backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
       const cameraId = backCamera.id;
 
       html5QrcodeScanner.start(
-        { deviceId: { exact: cameraId }, facingMode: "environment" }, // use back camera
+        cameraId,  // use selected back camera
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
-          // Stop scanning
+          // Stop scanning temporarily
           html5QrcodeScanner.stop().then(() => {
             document.getElementById('reader').style.display = 'none';
             try {
-              // Extract reward from scanned URL
               const url = new URL(qrCodeMessage);
               const reward = url.searchParams.get('reward');
               rewardNameEl.textContent = reward ? decodeURIComponent(reward) : "Invalid QR Code!";
             } catch(e) {
               rewardNameEl.textContent = "Invalid QR Code!";
             }
-            // Show popup
             rewardPopup.style.display = 'block';
-            // Auto-hide popup after 5 seconds
-            setTimeout(hidePopup, 5000);
+            // Auto-hide popup after 5 seconds and restart scanner
+            setTimeout(() => {
+              hidePopup();
+              html5QrcodeScanner.start(cameraId, { fps: 10, qrbox: 250 }, qrCodeMessageHandler, qrErrorHandler);
+            }, 5000);
           });
         },
         errorMessage => {
           console.warn("QR scan error:", errorMessage);
         }
       );
+
+      // Handlers for restarting scanner
+      function qrCodeMessageHandler(qrCodeMessage) {
+        html5QrcodeScanner.stop().then(() => {
+          document.getElementById('reader').style.display = 'none';
+          try {
+            const url = new URL(qrCodeMessage);
+            const reward = url.searchParams.get('reward');
+            rewardNameEl.textContent = reward ? decodeURIComponent(reward) : "Invalid QR Code!";
+          } catch(e) {
+            rewardNameEl.textContent = "Invalid QR Code!";
+          }
+          rewardPopup.style.display = 'block';
+          setTimeout(() => {
+            hidePopup();
+            html5QrcodeScanner.start(cameraId, { fps: 10, qrbox: 250 }, qrCodeMessageHandler, qrErrorHandler);
+          }, 5000);
+        });
+      }
+
+      function qrErrorHandler(err) {
+        console.warn("QR scan error:", err);
+      }
+
     }
   }).catch(err => {
     alert("Camera not found or permission denied: " + err);
