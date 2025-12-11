@@ -28,7 +28,7 @@ button {
   background: #ff7300;
   color: white;
   cursor: pointer;
-  margin: 10px 5px 0 5px;
+  margin-top: 20px;
 }
 
 button:hover {
@@ -80,7 +80,6 @@ button:hover {
 
 <h1>Admin QR Scanner</h1>
 <button id="startScannerBtn">Open Camera</button>
-<button id="switchCameraBtn" style="display:none;">Switch Camera</button>
 
 <div id="reader"></div>
 
@@ -96,72 +95,48 @@ button:hover {
 
 <script>
 const startBtn = document.getElementById('startScannerBtn');
-const switchBtn = document.getElementById('switchCameraBtn');
 const rewardPopup = document.getElementById('rewardPopup');
 const rewardNameEl = document.getElementById('rewardName');
 let html5QrcodeScanner;
-let cameras = [];
-let currentCameraIndex = 0;
 
 function closePopup() {
   rewardPopup.style.display = 'none';
   startBtn.style.display = 'inline-block';
-}
-
-function startScanner(cameraId) {
-  html5QrcodeScanner.start(
-    cameraId,
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      html5QrcodeScanner.stop().then(() => {
-        try {
-          const url = new URL(qrCodeMessage);
-          const reward = url.searchParams.get('reward');
-          rewardNameEl.textContent = reward ? decodeURIComponent(reward) : "Invalid QR Code!";
-        } catch(e) {
-          rewardNameEl.textContent = "Invalid QR Code!";
-        }
-        rewardPopup.style.display = 'block';
-      });
-    },
-    errorMessage => {
-      console.warn("QR scan error:", errorMessage);
-    }
-  ).catch(err => {
-    alert("Error starting scanner: " + err);
-  });
+  document.getElementById('reader').style.display = 'block';
 }
 
 startBtn.addEventListener('click', () => {
   startBtn.style.display = 'none';
-  switchBtn.style.display = 'inline-block';
+  document.getElementById('reader').style.display = 'block';
   html5QrcodeScanner = new Html5Qrcode("reader");
 
-  Html5Qrcode.getCameras().then(foundCameras => {
-    if (foundCameras && foundCameras.length) {
-      cameras = foundCameras;
-      currentCameraIndex = 0;
-      // Start with back camera if available
+  Html5Qrcode.getCameras().then(cameras => {
+    if (cameras && cameras.length) {
+      // Pick back camera by default
       const backCamera = cameras.find(cam => /back|rear|wide/i.test(cam.label)) || cameras[0];
-      currentCameraIndex = cameras.indexOf(backCamera);
-      startScanner(cameras[currentCameraIndex].id);
+      const cameraId = backCamera.id;
+
+      html5QrcodeScanner.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          // Stop scanner when QR detected
+          html5QrcodeScanner.stop().then(() => {
+            document.getElementById('reader').style.display = 'none';
+            // Show QR content directly as reward
+            rewardNameEl.textContent = qrCodeMessage || "Invalid QR Code!";
+            rewardPopup.style.display = 'block';
+          });
+        },
+        errorMessage => {
+          console.warn("QR scan error:", errorMessage);
+        }
+      );
     } else {
       alert("No cameras found on this device.");
     }
   }).catch(err => {
     alert("Camera permission denied or not available: " + err);
-  });
-});
-
-// Switch camera
-switchBtn.addEventListener('click', () => {
-  if (!cameras.length) return;
-  html5QrcodeScanner.stop().then(() => {
-    // Move to next camera
-    currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-    startScanner(cameras[currentCameraIndex].id);
-  }).catch(err => {
-    console.warn("Error switching camera: ", err);
   });
 });
 </script>
